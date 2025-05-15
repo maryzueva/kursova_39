@@ -18,105 +18,105 @@ using namespace std;
 enum CellState { UNKNOWN, WHITE, BLACK, ERROR_STATE };
 
 const int MAXN = 12;
-int N, M;
-int grid[MAXN][MAXN];
-CellState state[MAXN][MAXN];
-bool visited[MAXN][MAXN];
+int g_n, g_m;
+int g_mat[MAXN][MAXN];
+CellState g_col[MAXN][MAXN];
+bool g_vis[MAXN][MAXN];
 
-const int dx[4] = {1, -1, 0, 0};
-const int dy[4] = {0, 0, 1, -1};
+const int DX[4] = {1, -1, 0, 0};
+const int DY[4] = {0, 0, 1, -1};
 
 void pause(int ms) {
     this_thread::sleep_for(chrono::milliseconds(ms));
 }
 
-void printFormattedGrid() {
+void printGrid() {
 #ifdef _WIN32
     system("cls");
 #else
     system("clear");
 #endif
     cout << "\n     ";
-    for (int j = 0; j < M; ++j)
+    for (int j = 0; j < g_m; ++j)
         cout << setw(2) << j << " ";
-    cout << "\n    +" << string(M * 3, '-') << "+\n";
-    for (int i = 0; i < N; ++i) {
+    cout << "\n    +" << string(g_m * 3, '-') << "+\n";
+    for (int i = 0; i < g_n; ++i) {
         cout << setw(2) << i << " |";
-        for (int j = 0; j < M; ++j) {
-            if (state[i][j] == WHITE)
-                cout << GREEN << setw(2) << grid[i][j] << " " << RESET;
-            else if (state[i][j] == BLACK)
+        for (int j = 0; j < g_m; ++j) {
+            if (g_col[i][j] == WHITE)
+                cout << GREEN << setw(2) << g_mat[i][j] << " " << RESET;
+            else if (g_col[i][j] == BLACK)
                 cout << BLUE << " # " << RESET;
-            else if (state[i][j] == ERROR_STATE)
+            else if (g_col[i][j] == ERROR_STATE)
                 cout << RED << " ! " << RESET;
             else
                 cout << " . ";
         }
         cout << "|\n";
     }
-    cout << "    +" << string(M * 3, '-') << "+\n";
+    cout << "    +" << string(g_m * 3, '-') << "+\n";
     pause(80);
 }
 
 bool inBounds(int x, int y) {
-    return x >= 0 && y >= 0 && x < N && y < M;
+    return x >= 0 && y >= 0 && x < g_n && y < g_m;
 }
 
-void clearVisited() {
-    for (int i = 0; i < N; ++i)
-        for (int j = 0; j < M; ++j)
-            visited[i][j] = false;
+void clearVis() {
+    for (int i = 0; i < g_n; ++i)
+        for (int j = 0; j < g_m; ++j)
+            g_vis[i][j] = false;
 }
 
-bool makes2x2(int x, int y) {
-    state[x][y] = BLACK;
+bool forms2x2(int x, int y) {
+    g_col[x][y] = BLACK;
     bool found = false;
     for (int dx0 = -1; dx0 <= 0; ++dx0)
         for (int dy0 = -1; dy0 <= 0; ++dy0) {
             int a = x + dx0, b = y + dy0;
             if (inBounds(a,b) && inBounds(a+1,b+1)) {
-                if (state[a][b] == BLACK && state[a+1][b] == BLACK &&
-                    state[a][b+1] == BLACK && state[a+1][b+1] == BLACK) {
+                if (g_col[a][b] == BLACK && g_col[a+1][b] == BLACK &&
+                    g_col[a][b+1] == BLACK && g_col[a+1][b+1] == BLACK) {
                     found = true;
                 }
             }
         }
-    state[x][y] = UNKNOWN;
+    g_col[x][y] = UNKNOWN;
     return found;
 }
 
-bool is2x2Black() {
-    for (int i = 0; i < N - 1; ++i)
-        for (int j = 0; j < M - 1; ++j)
-            if (state[i][j] == BLACK && state[i+1][j] == BLACK &&
-                state[i][j+1] == BLACK && state[i+1][j+1] == BLACK)
+bool has2x2() {
+    for (int i = 0; i < g_n - 1; ++i)
+        for (int j = 0; j < g_m - 1; ++j)
+            if (g_col[i][j] == BLACK && g_col[i+1][j] == BLACK &&
+                g_col[i][j+1] == BLACK && g_col[i+1][j+1] == BLACK)
                 return true;
     return false;
 }
 
-bool checkBlackConnected() {
-    clearVisited();
+bool blackConnected() {
+    clearVis();
     queue<pair<int,int>> q;
     bool started = false;
     int total = 0, seen = 0;
-    for (int i = 0; i < N && !started; ++i)
-        for (int j = 0; j < M; ++j)
-            if (state[i][j] == BLACK) {
+    for (int i = 0; i < g_n && !started; ++i)
+        for (int j = 0; j < g_m; ++j)
+            if (g_col[i][j] == BLACK) {
                 q.push({i,j});
-                visited[i][j] = true;
+                g_vis[i][j] = true;
                 started = true;
                 break;
             }
-    for (int i = 0; i < N; ++i)
-        for (int j = 0; j < M; ++j)
-            if (state[i][j] == BLACK) total++;
+    for (int i = 0; i < g_n; ++i)
+        for (int j = 0; j < g_m; ++j)
+            if (g_col[i][j] == BLACK) total++;
     while (!q.empty()) {
         auto [x,y] = q.front(); q.pop();
         seen++;
         for (int d = 0; d < 4; ++d) {
-            int nx = x + dx[d], ny = y + dy[d];
-            if (inBounds(nx,ny) && state[nx][ny] == BLACK && !visited[nx][ny]) {
-                visited[nx][ny] = true;
+            int nx = x + DX[d], ny = y + DY[d];
+            if (inBounds(nx,ny) && g_col[nx][ny] == BLACK && !g_vis[nx][ny]) {
+                g_vis[nx][ny] = true;
                 q.push({nx,ny});
             }
         }
@@ -124,26 +124,34 @@ bool checkBlackConnected() {
     return seen == total;
 }
 
-void dfsSameValue(int x, int y, int val, vector<pair<int,int>>& region) {
-    if (!inBounds(x,y) || visited[x][y] || grid[x][y] != val || state[x][y] != UNKNOWN)
+/*  ---------------------------------------------------------------------[<]-
+    Функція: dfs
+    Призначення: Пошук клітинок із тим самим значенням.
+ ---------------------------------------------------------------------[>]-*/
+void dfs(int x, int y, int val, vector<pair<int,int>>& reg) {
+    if (!inBounds(x,y) || g_vis[x][y] || g_mat[x][y] != val || g_col[x][y] != UNKNOWN)
         return;
-    visited[x][y] = true;
-    region.emplace_back(x,y);
+    g_vis[x][y] = true;
+    reg.emplace_back(x,y);
     for (int d = 0; d < 4; ++d)
-        dfsSameValue(x + dx[d], y + dy[d], val, region);
+        dfs(x + DX[d], y + DY[d], val, reg);
 }
 
-bool isConnected(const vector<pair<int,int>>& cells) {
+/*  ---------------------------------------------------------------------[<]-
+    Функція: isGroupConn
+    Призначення: Перевіряє, чи клітинки утворюють зв'язну групу.
+ ---------------------------------------------------------------------[>]-*/
+bool isGroupConn(const vector<pair<int,int>>& cells) {
     if (cells.empty()) return false;
-    set<pair<int,int>> cellSet(cells.begin(), cells.end());
+    set<pair<int,int>> all(cells.begin(), cells.end());
     queue<pair<int,int>> q;
     set<pair<int,int>> seen;
     q.push(cells[0]); seen.insert(cells[0]);
     while (!q.empty()) {
         auto [x,y] = q.front(); q.pop();
         for (int d = 0; d < 4; ++d) {
-            int nx = x + dx[d], ny = y + dy[d];
-            if (cellSet.count({nx,ny}) && !seen.count({nx,ny})) {
+            int nx = x + DX[d], ny = y + DY[d];
+            if (all.count({nx,ny}) && !seen.count({nx,ny})) {
                 seen.insert({nx,ny}); q.push({nx,ny});
             }
         }
@@ -151,47 +159,54 @@ bool isConnected(const vector<pair<int,int>>& cells) {
     return seen.size() == cells.size();
 }
 
-bool chooseValidIsland(const vector<pair<int,int>>& group, int val, vector<pair<int,int>>& chosen) {
+/*  ---------------------------------------------------------------------[<]-
+    Функція: chooseIsland
+    Призначення: Вибирає зв'язну підгрупу клітинок розміром val.
+ ---------------------------------------------------------------------[>]-*/
+bool chooseIsland(const vector<pair<int,int>>& group, int val, vector<pair<int,int>>& pick) {
     vector<int> sel(group.size(), 0);
     fill(sel.end() - val, sel.end(), 1);
     do {
         vector<pair<int,int>> test;
         for (size_t i = 0; i < sel.size(); ++i)
             if (sel[i]) test.push_back(group[i]);
-        if (isConnected(test)) {
-            chosen = test;
+        if (isGroupConn(test)) {
+            pick = test;
             return true;
         }
     } while (next_permutation(sel.begin(), sel.end()));
     return false;
 }
 
-void processWhiteRegions() {
-    clearVisited();
-    for (int i = 0; i < N; ++i) for (int j = 0; j < M; ++j) visited[i][j] = false;
-    for (int i = 0; i < N; ++i) for (int j = 0; j < M; ++j) {
-        if (!visited[i][j] && state[i][j] == UNKNOWN) {
-            vector<pair<int,int>> region;
-            dfsSameValue(i, j, grid[i][j], region);
-            int val = grid[i][j];
-            if ((int)region.size() < val) {
-                for (auto &p: region) { state[p.first][p.second] = ERROR_STATE; printFormattedGrid(); }
+/*  ---------------------------------------------------------------------[<]-
+    Функція: processWhite
+    Призначення: Обробляє всі білі зони згідно правил.
+ ---------------------------------------------------------------------[>]-*/
+void processWhite() {
+    clearVis();
+    for (int i = 0; i < g_n; ++i) for (int j = 0; j < g_m; ++j) {
+        if (!g_vis[i][j] && g_col[i][j] == UNKNOWN) {
+            vector<pair<int,int>> reg;
+            dfs(i, j, g_mat[i][j], reg);
+            int val = g_mat[i][j];
+            if ((int)reg.size() < val) {
+                for (auto &p: reg) { g_col[p.first][p.second] = ERROR_STATE; printGrid(); }
             } else {
-                vector<pair<int,int>> chosen;
-                if (chooseValidIsland(region, val, chosen)) {
-                    for (auto &p: region) {
-                        if (find(chosen.begin(), chosen.end(), p) == chosen.end()) {
-                            if (!makes2x2(p.first,p.second)) state[p.first][p.second] = BLACK;
-                            else state[p.first][p.second] = ERROR_STATE;
-                            printFormattedGrid();
+                vector<pair<int,int>> pick;
+                if (chooseIsland(reg, val, pick)) {
+                    for (auto &p: reg) {
+                        if (find(pick.begin(), pick.end(), p) == pick.end()) {
+                            if (!forms2x2(p.first,p.second)) g_col[p.first][p.second] = BLACK;
+                            else g_col[p.first][p.second] = ERROR_STATE;
+                            printGrid();
                         }
                     }
-                    for (auto &p: chosen) {
-                        state[p.first][p.second] = WHITE;
-                        printFormattedGrid();
+                    for (auto &p: pick) {
+                        g_col[p.first][p.second] = WHITE;
+                        printGrid();
                     }
                 } else {
-                    for (auto &p: region) { state[p.first][p.second] = ERROR_STATE; printFormattedGrid(); }
+                    for (auto &p: reg) { g_col[p.first][p.second] = ERROR_STATE; printGrid(); }
                 }
             }
         }
@@ -199,41 +214,34 @@ void processWhiteRegions() {
 }
 
 int main() {
-    int T;
+    int t;
     cout << "Введіть кількість задач (T): ";
-    if (!(cin >> T)) {
+    if (!(cin >> t)) {
         cout << "Невірний ввід. Завершення програми." << endl;
         return 0;
     }
-    
-    for (int puzzle = 1; puzzle <= T; ++puzzle) {
-        cout << "Задача #" << puzzle << ":\n";
+    for (int z = 1; z <= t; ++z) {
+        cout << "Задача #" << z << ":\n";
         cout << "Введіть розміри сітки (N M): ";
-        cin >> N >> M;
-        
-        cout << "Введіть елементи сітки (кожен рядок через пробіл):\n";
-        for (int i = 0; i < N; ++i) {
-            for (int j = 0; j < M; ++j) {
-                cin >> grid[i][j];
-            }
-        }
-        for (int i = 0; i < MAXN; ++i) {
-            for (int j = 0; j < MAXN; ++j) {
-                state[i][j] = UNKNOWN;
-            }
-        }
+        cin >> g_n >> g_m;
+        cout << "Введіть елементи сітки (рядки через пробіл):\n";
+        for (int i = 0; i < g_n; ++i)
+            for (int j = 0; j < g_m; ++j)
+                cin >> g_mat[i][j];
+        for (int i = 0; i < MAXN; ++i)
+            for (int j = 0; j < MAXN; ++j)
+                g_col[i][j] = UNKNOWN;
 
-        cout << "Розв'язання задачі #" << puzzle << ":\n";
-        processWhiteRegions();
-        bool squareErr = is2x2Black();
-        bool blackConn = checkBlackConnected();
-        printFormattedGrid();
-        
-        if (squareErr) cout << RED << "Помилка: існує чорний блок 2×2" << RESET << "\n";
-        if (!blackConn) cout << RED << "Помилка: чорна область не є зв'язаною" << RESET << "\n";
-        if (!squareErr && blackConn) cout << GREEN << "Розв'язання успішне!" << RESET << "\n";
+        cout << "Розв'язання задачі #" << z << ":\n";
+        processWhite();
+        bool err2x2 = has2x2();
+        bool blkConn = blackConnected();
+        printGrid();
+
+        if (err2x2) cout << RED << "Помилка: чорний блок 2×2" << RESET << "\n";
+        if (!blkConn) cout << RED << "Помилка: чорна область не є зв'язаною" << RESET << "\n";
+        if (!err2x2 && blkConn) cout << GREEN << "Розв'язання успішне!" << RESET << "\n";
         cout << "\n";
     }
-
     return 0;
 }
