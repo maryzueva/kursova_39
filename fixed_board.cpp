@@ -29,7 +29,7 @@ void solveFixedBoard(int mode) {
             cout << "Неправильне значення N.\n";
             return;
         }
-        cout << "Введіть дошку (" << N << " x " << N << ", 0 для порожньо, ціле >0 — цифра):\n";
+        cout << "Введіть дошку (числа через пробіл):\n";
         for (int i = 0; i < N; ++i)
             for (int j = 0; j < N; ++j) {
                 if (!(cin >> field[i][j]) || field[i][j] < 0) {
